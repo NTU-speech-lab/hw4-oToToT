@@ -1,55 +1,9 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# # Recurrent Neural Networks
-# 
-# 本次作業是要讓同學接觸 NLP 當中一個簡單的 task —— 語句分類（文本分類）
-# 
-# 給定一個語句，判斷他有沒有惡意（負面標 1，正面標 0）
-# 
-# 若有任何問題，歡迎來信至助教信箱 ntu-ml-2020spring-ta@googlegroups.com
-
-# In[1]:
-
-
-# from google.colab import drive
-# drive.mount('/content/drive')
-# path_prefix = 'drive/My Drive/Colab Notebooks/hw4 - Recurrent Neural Network'
 path_prefix = './'
 
 
-# ### Download Dataset
-# 有三個檔案，分別是 training_label.txt、training_nolabel.txt、testing_data.txt
-# 
-# - training_label.txt：有 label 的 training data（句子配上 0 or 1，+++$+++ 只是分隔符號，不要理它）
-#     - e.g., 1 +++$+++ are wtf ... awww thanks !
-# 
-# - training_nolabel.txt：沒有 label 的 training data（只有句子），用來做 semi-supervised learning
-#     - ex: hates being this burnt !! ouch
-# 
-# - testing_data.txt：你要判斷 testing data 裡面的句子是 0 or 1
-# 
-#     >id,text  
-#     >0,my dog ate our dinner . no , seriously ... he ate it .  
-#     >1,omg last day sooon n of primary noooooo x im gona be swimming out of school wif the amount of tears am gona cry  
-#     >2,stupid boys .. they ' re so .. stupid !
-
-# In[2]:
-
-
-# !wget --no-check-certificate 'https://drive.google.com/uc?export=download&id=1dPHIl8ZnfDz_fxNd2ZeBYedTat2lfxcO' -O 'drive/My Drive/Colab Notebooks/hw8-RNN/data/training_label.txt'
-# !wget --no-check-certificate 'https://drive.google.com/uc?export=download&id=1x1rJOX_ETqnOZjdMAbEE2pqIjRNa8xcc' -O 'drive/My Drive/Colab Notebooks/hw8-RNN/data/training_nolabel.txt'
-# !wget --no-check-certificate 'https://drive.google.com/uc?export=download&id=16CtnQwSDCob9xmm6EdHHR7PNFNiOrQ30' -O 'drive/My Drive/Colab Notebooks/hw8-RNN/data/testing_data.txt'
-
-# !gdown --id '1lz0Wtwxsh5YCPdqQ3E3l_nbfJT1N13V8' --output data.zip
-# !unzip data.zip
-# !ls
-
-
-# In[3]:
-
-
-# this is for filtering the warnings
 import warnings
 warnings.filterwarnings('ignore')
 
@@ -419,9 +373,10 @@ from sklearn.model_selection import train_test_split
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # 處理好各個 data 的路徑
-train_with_label = os.path.join(path_prefix, 'training_label.txt')
-train_no_label = os.path.join(path_prefix, 'training_nolabel.txt')
-testing_data = os.path.join(path_prefix, 'testing_data.txt')
+try:
+    testing_data = sys.argv[1]
+except:
+    testing_data = os.path.join(path_prefix, 'testing_data.txt')
 
 w2v_path = os.path.join(path_prefix, 'w2v_all.model') # 處理 word to vec model 的路徑
 
@@ -430,7 +385,6 @@ sen_len = 35
 fix_embedding = True # fix embedding during training
 batch_size = 128
 epoch = 3
-iteration = 0
 sr = 0.05
 lr = 0.001
 vr = 0.25
@@ -438,70 +392,6 @@ vr = 0.25
 model_dir = path_prefix # model directory for checkpoint model
 
 print("loading data ...") # 把 'training_label.txt' 跟 'training_nolabel.txt' 讀進來
-train_x, y = load_training_data(train_with_label)
-train_x_no_label = load_training_data(train_no_label)
-
-# 對 input 跟 labels 做預處理
-preprocess = Preprocess(train_x, sen_len, w2v_path=w2v_path)
-embedding = preprocess.make_embedding(load=True)
-train_x = preprocess.sentence_word2idx()
-y = preprocess.labels_to_tensor(y)
-
-preprocess = Preprocess(train_x_no_label, sen_len, w2v_path=w2v_path)
-embedding = preprocess.make_embedding(load=True)
-train_x_no_label = preprocess.sentence_word2idx()
-
-# 製作一個 model 的對象
-model = LSTM_Net(embedding, embedding_dim=500, hidden_dim=500, num_layers=3, dropout=0.5, fix_embedding=fix_embedding)
-model = model.to(device) # device為 "cuda"，model 使用 GPU 來訓練（餵進去的 inputs 也需要是 cuda tensor）
-
-# 把 data 分為 training data 跟 validation data（將一部份 training data 拿去當作 validation data）
-pivot = int(len(train_x) * vr)
-X_train, X_val, y_train, y_val = train_x[pivot:], train_x[:pivot], y[pivot:], y[:pivot]
-
-best_acc = 0
-
-# 開始訓練
-for _ in range(iteration):
-    # 把 data 做成 dataset 供 dataloader 取用
-    train_dataset = TwitterDataset(X=X_train, y=y_train)
-    val_dataset = TwitterDataset(X=X_val, y=y_val)
-
-    # 把 data 轉成 batch of tensors
-    train_loader = torch.utils.data.DataLoader(
-        dataset = train_dataset,
-        batch_size = batch_size,
-        shuffle = True,
-        #num_workers = 8
-    )
-
-    val_loader = torch.utils.data.DataLoader(
-        dataset = val_dataset,
-        batch_size = batch_size,
-        shuffle = False,
-        #num_workers = 8
-    )
-    best_acc = training(batch_size, epoch, lr, model_dir, train_loader, val_loader, model, device, best_acc)
-
-    train_no_label_dataset = TwitterDataset(X=train_x_no_label, y=None)
-    train_no_label_loader = torch.utils.data.DataLoader(
-        dataset = train_no_label_dataset,
-        batch_size = batch_size,
-        shuffle = False,
-        #num_workers = 8
-    )
-    scores = get_score(batch_size, train_no_label_loader, model, device)
-    indices = np.argsort(scores)
-    indices_needed = np.concatenate((indices[:int(len(scores) * sr)], indices[-int(len(scores) * sr):]))
-    indices_unused = indices[int(len(scores) * sr):-int(len(scores) * sr)]
-    X_train = torch.cat((
-        X_train, 
-        torch.LongTensor([train_x_no_label[idx].numpy() for idx in indices_needed])
-    ))
-    y_train = torch.cat((y_train, torch.LongTensor([scores[idx] >= 0.5 for idx in indices_needed])))
-    train_x_no_label = torch.LongTensor([train_x_no_label[idx].numpy() for idx in indices_unused])
-
-
 # ### Predict and Write to csv file
 
 # In[12]:
@@ -520,13 +410,23 @@ test_loader = torch.utils.data.DataLoader(dataset = test_dataset,
                                             #num_workers = 8
                                          )
 print('\nload model ...')
-model = torch.load(os.path.join(model_dir, 'ckpt.model'))
+model = torch.load(os.path.join(model_dir, 'torch.model'))
 outputs = testing(batch_size, test_loader, model, device)
 
 # 寫到 csv 檔案供上傳 Kaggle
 tmp = pd.DataFrame({"id":[str(i) for i in range(len(test_x))],"label":outputs})
 print("save csv ...")
-tmp.to_csv(os.path.join(path_prefix, 'predict.csv'), index=False)
+try:
+    output_fpath = sys.argv[2]
+except:
+    output_fpath = os.path.join(path_prefix, 'predict.csv')
+
+
+di = os.path.dirname(output_fpath)
+if di != '':
+    os.makedirs(di, exist_ok=True)
+
+tmp.to_csv(output_fpath, index=False)
 print("Finish Predicting")
 
 # 以下是使用 command line 上傳到 Kaggle 的方式
