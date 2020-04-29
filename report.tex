@@ -81,6 +81,8 @@ RNN的訓練過程可以參考下面的圖片
 
 \item 請描述你的semi-supervised方法是如何標記label，並比較有無semi-supervised training對準確率的影響並試著探討原因。
 
+我的best model有使用self training來加強他的test data，而我的semi-supervised方法是自己挑選一組參數$k,r$，會在每$k$個epoch後，利用當前的model predict那些unlabeled data，並且將依照$r$的比例將較接近1與較接近0的資料挑除來，放入training set裡面，繼續訓練模型。我認為有為使用上述的semi-supervised方法訓練對於準確度的影響不大，但是使用後可以稍微加快模型的收斂速度。
+
 % \begin{figure}[ht]
 %     \center
 %     \includegraphics[width=.8\textwidth]{confusion.pdf}
