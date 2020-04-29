@@ -3,3 +3,7 @@ training_label.txt
 training_nolabel.txt
 testing_data.txt
 .ipynb_checkpoints/
+report.aux
+report.log
+report.synctex.gz
+report.out

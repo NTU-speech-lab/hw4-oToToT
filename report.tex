@@ -1,0 +1,95 @@
+\documentclass[a4paper,11pt]{article}
+\usepackage[left=1.8cm, right=1.8cm, top=2.5cm, bottom=2cm]{geometry}
+\usepackage{xeCJK}
+\usepackage{hyperref}
+\usepackage{indentfirst}
+\usepackage{tabularx}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{listings}
+\usepackage{verbatim}
+\usepackage{fancyhdr}
+% \usepackage[compact]{titlesec}
+\usepackage[usenames,dvipsnames]{xcolor}
+
+\setCJKmainfont{NotoSansCJKtc-Thin}
+\setmonofont{Consolas}
+
+\definecolor{CodeGreen}{rgb}{0,0.6,0}
+\definecolor{CodeGray}{rgb}{0.5,0.5,0.5}
+\definecolor{CodeMauve}{rgb}{0.58,0,0.82}
+\lstset{
+    basicstyle = \ttfamily\footnotesize, 
+    breakatwhitespace = false,
+    breaklines = true,         
+    commentstyle = \color{CodeGreen}\bfseries,
+    extendedchars = false,
+    keepspaces=true,
+    keywordstyle=\color{blue}\bfseries, % keyword style
+    language = C++,                     % the language of code
+    otherkeywords={string},
+    numbers=none,
+    numbersep=5pt,
+    numberstyle=\tiny\color{CodeGray},
+    rulecolor=\color{black},
+    showspaces=false,
+    showstringspaces=false,
+    showtabs=false,
+    stepnumber=1,       
+    stringstyle=\color{CodeMauve},        % string literal style
+    tabsize=2,
+}
+% from https://blog.csdn.net/RobertChenGuangzhi/article/details/45126785
+
+\title{Machine Learning 2020 - Homework 3 Report}
+\author{學號：b08902100, 系級：資工一, 姓名：江昱勳}
+\date{}
+
+\begin{document}
+\pagestyle{fancy}
+\fancyhead[L]{Machine Learning 2020 - Homework 6}
+\fancyhead[R]{Author: b08902100 江昱勳}
+
+\maketitle
+
+% \verbatiminput{HW2_S.txt}
+% \lstinputlisting{HW2.cpp}
+
+\begin{enumerate}
+
+\item 請說明你實作的RNN的模型架構、word embedding 方法、訓練過程(learning curve)和準確率為何？
+
+我的RNN模型架構由三層雙向的LSTM加上三層的全連接層組成，每層LSTM後接帶有機率0.5的Dropout層，而每層全連階層之間的活化函數則是使用ReLU，而最後會將輸出通過Sigmoid函數讓數值在0~1之間。word embedding的部份使用gensim內建的word to vector模型做訓練，嘗試將文字輸出成500維的向量，使用skip-gram方式並且將window大小設定成5，而一個字要出現超過5次才會將其考慮進來，最後訓練25個epoch。
+
+RNN的訓練過程可以參考下面的圖片
+
+\includegraphics[width=.45\textwidth]{acc.pdf}
+\includegraphics[width=.45\textwidth]{loss.pdf}
+
+最後我是將validation accuracy最高的model存下來使用，其準確率(kaggle上的public score)為0.82232。
+
+
+\item 請比較BOW+DNN與RNN兩種不同model對於``today is a good day, but it is hot''與``today is hot, but it is a good day''這兩句的分數(過softmax後的數值)，並討論造成差異的原因。
+
+我建立了一個簡單的DNN，總共由5層全連接層組成，除了最後一層以外，接以ReLU作為活化函數連接，最後一層則透過sigmoid函數將數值控制在0~1之間，而BOW的部份我則僅統計總出現次數超過10次的單字，並刪除一些標點符號以及停用詞來讓構成的向量大小不會太大；該model在kaggle上的public score為0.79189。
+
+以BOW+DNN模型預測``today is a good day, but it is hot''與``today is hot, but it is a good day''的分數為0.76685613，而RNN則輸出0.2985。可以發現RNN將該句話視為叫為負面的語句，而BOW+DNN則相反，推測可能是因為BOW+DNN沒有整段話的資訊，無法分辨出but所代表的轉折語氣，而RNN因為會完整有順序的將一個句子閱讀完，因此叫BOW+DNN能體現語句中的轉折。
+
+\item 請敘述你如何 improve performance（preprocess、embedding、架構等等），並解釋為何這些做法可以使模型進步，並列出準確率與improve前的差異。
+
+我有參考過 ``Pedro M. Sosa, (2017, June 7), \textit{Twitter Sentiment Analysis using combined LSTM-CNN Models} [Online]. Available: \url{https://www.academia.edu/35947062/Twitter_Sentiment_Analysis_using_combined_LSTM-CNN_Models}''描述的方法，將LSTM搭配CNN構築model，然而我並沒有看到模型的進步。我也嘗試將LSTM改成GRU過，其performance與LSTM無太大的差異(在kaggle上的public score都是0.82232)。而嘗試換過word to vector的維度以及訓練次數皆沒有顯著的進步。
+
+\item 請描述你的semi-supervised方法是如何標記label，並比較有無semi-supervised training對準確率的影響並試著探討原因。
+
+% \begin{figure}[ht]
+%     \center
+%     \includegraphics[width=.8\textwidth]{confusion.pdf}
+%     \caption{confusion matrix}
+%     \label{fig:conf}
+% \end{figure}
+
+% 從圖\ref{fig:conf}中可以看到，這個model最容易將3跟0搞混，1跟2之間也很容易被搞混。
+
+\end{enumerate}
+
+\end{document}
