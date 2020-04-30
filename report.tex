@@ -81,16 +81,38 @@ RNN的訓練過程可以參考下面的圖片
 
 \item 請描述你的semi-supervised方法是如何標記label，並比較有無semi-supervised training對準確率的影響並試著探討原因。
 
-我的best model有使用self training來加強他的test data，而我的semi-supervised方法是自己挑選一組參數$k,r$，會在每$k$個epoch後，利用當前的model predict那些unlabeled data，並且將依照$r$的比例將較接近1與較接近0的資料挑除來，放入training set裡面，繼續訓練模型。我認為有為使用上述的semi-supervised方法訓練對於準確度的影響不大，但是使用後可以稍微加快模型的收斂速度。
+我的best model有使用self training來加強他的test data，而我的semi-supervised方法是自己挑選一組參數$k,r$，會在每$k$個epoch後，利用當前的model predict那些unlabeled data，並且將依照$r$的比例將較接近1與較接近0的資料挑除來，放入training set裡面，繼續訓練模型。我認為有為使用上述的semi-supervised方法訓練對於準確度可以有小小的增幅，且使用後可以稍微加快模型的收斂速度。
 
-% \begin{figure}[ht]
-%     \center
-%     \includegraphics[width=.8\textwidth]{confusion.pdf}
-%     \caption{confusion matrix}
-%     \label{fig:conf}
-% \end{figure}
+我依照建議嘗試分別使用self training與不使用self training訓練了兩個模型，有使用的其在kaggle上的public score為0.78970，而沒使用的則為0.77847，從下列的圖片也可看出兩者訓練時的圖形其實差異不大。
 
-% 從圖\ref{fig:conf}中可以看到，這個model最容易將3跟0搞混，1跟2之間也很容易被搞混。
+\begin{figure}[ht]
+    \center
+    \includegraphics[width=.8\textwidth]{no_self_acc.pdf}
+    \caption{accuracy without self training}
+    \label{fig:no_self_acc}
+\end{figure}
+
+\begin{figure}[ht]
+    \center
+    \includegraphics[width=.8\textwidth]{no_self_loss.pdf}
+    \caption{loss without self training}
+    \label{fig:no_self_loss}
+\end{figure}
+
+
+\begin{figure}[ht]
+    \center
+    \includegraphics[width=.8\textwidth]{self_acc.pdf}
+    \caption{accuracy with self training}
+    \label{fig:self_acc}
+\end{figure}
+
+\begin{figure}[ht]
+    \center
+    \includegraphics[width=.8\textwidth]{self_loss.pdf}
+    \caption{loss without self training}
+    \label{fig:self_loss}
+\end{figure}
 
 \end{enumerate}
 
