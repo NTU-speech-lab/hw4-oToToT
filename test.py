@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # coding: utf-8
 
+import sys
+
 path_prefix = './'
 
 
@@ -74,27 +76,13 @@ def train_word2vec(x):
     return model
 
 if __name__ == "__main__" and False:
-    print("loading training data ...")
-    train_x, y = load_training_data('training_label.txt')
-    train_x_no_label = load_training_data('training_nolabel.txt')
+
+    fpath = sys.argv[1] if len(sys.argv) > 1 else 'testing_data.txt'
 
     print("loading testing data ...")
-    test_x = load_testing_data('testing_data.txt')
-
-    model = train_word2vec(train_x + train_x_no_label + test_x)
-#     model = train_word2vec(train_x + test_x)
-    
-    print("saving model ...")
-    # model.save(os.path.join(path_prefix, 'model/w2v_all.model'))
-    model.save(os.path.join(path_prefix, 'w2v_all.model'))
+    test_x = load_testing_data(fpath)
 
 
-# ### Data Preprocess
-
-# In[6]:
-
-
-# preprocess.py
 # 這個 block 用來做 data 的預處理
 from torch import nn
 from gensim.models import Word2Vec
